@@ -115,22 +115,17 @@ export default async function AuctionsPage({
           <span className="font-medium text-foreground">Auctions</span>
         </nav>
 
-        <select
-          defaultValue={params.sort || "ending_soon"}
-          onChange={(e) => {
-            const url = new URL(window.location.href);
-            url.searchParams.set("sort", e.target.value);
-            url.searchParams.delete("page");
-            window.location.href = url.toString();
-          }}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-        >
-          <option value="ending_soon">Ending Soon</option>
-          <option value="newly_listed">Newly Listed</option>
-          <option value="price_low">Price: Low to High</option>
-          <option value="price_high">Price: High to Low</option>
-          <option value="most_bids">Most Bids</option>
-        </select>
+        <SortSelect
+            defaultValue={params.sort || "ending_soon"}
+            basePath="/browse/auctions"
+            options={[
+              { value: "ending_soon", label: "Ending Soon" },
+              { value: "newly_listed", label: "Newly Listed" },
+              { value: "price_low", label: "Price: Low to High" },
+              { value: "price_high", label: "Price: High to Low" },
+              { value: "most_bids", label: "Most Bids" },
+            ]}
+          />
       </div>
 
       {/* Listing Grid */}

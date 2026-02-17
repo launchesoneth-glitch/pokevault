@@ -106,20 +106,15 @@ export default async function BuyNowPage({ searchParams }: BuyNowPageProps) {
           <span className="font-medium text-foreground">Buy Now</span>
         </nav>
 
-        <select
-          defaultValue={params.sort || "newly_listed"}
-          onChange={(e) => {
-            const url = new URL(window.location.href);
-            url.searchParams.set("sort", e.target.value);
-            url.searchParams.delete("page");
-            window.location.href = url.toString();
-          }}
-          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm text-foreground focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent"
-        >
-          <option value="newly_listed">Newly Listed</option>
-          <option value="price_low">Price: Low to High</option>
-          <option value="price_high">Price: High to Low</option>
-        </select>
+        <SortSelect
+            defaultValue={params.sort || "newly_listed"}
+            basePath="/browse/buy-now"
+            options={[
+              { value: "newly_listed", label: "Newly Listed" },
+              { value: "price_low", label: "Price: Low to High" },
+              { value: "price_high", label: "Price: High to Low" },
+            ]}
+          />
       </div>
 
       {/* Listing Grid */}
