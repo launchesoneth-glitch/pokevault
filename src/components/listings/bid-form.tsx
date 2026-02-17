@@ -1,16 +1,48 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Gavel, Plus, AlertCircle, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { Gavel, Plus, AlertCircle, CheckCircle2, LogIn } from "lucide-react";
 import { getBidIncrement } from "@/lib/constants";
 
 interface BidFormProps {
   listingId: string;
   currentBid: number;
   startingPrice: number | null;
+  isAuthenticated?: boolean;
 }
 
-export function BidForm({ listingId, currentBid, startingPrice }: BidFormProps) {
+export function BidForm({ listingId, currentBid, startingPrice, isAuthenticated = false }: BidFormProps) {
+  if (!isAuthenticated) {
+    return (
+      <div className="space-y-3">
+        <div className="rounded-lg border border-accent/20 bg-accent/5 px-4 py-5 text-center">
+          <LogIn className="mx-auto mb-2 h-6 w-6 text-accent" />
+          <p className="text-sm font-medium text-foreground">
+            Sign in to place a bid
+          </p>
+          <p className="mt-1 text-xs text-muted">
+            You need an account to participate in auctions
+          </p>
+          <div className="mt-3 flex items-center justify-center gap-2">
+            <Link
+              href="/auth/login"
+              className="rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-background transition-colors hover:bg-accent/90"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/auth/register"
+              className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-foreground transition-colors hover:border-accent/50 hover:text-accent"
+            >
+              Create Account
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const effectiveCurrentPrice =
     currentBid > 0 ? currentBid : (startingPrice ?? 0);
   const increment = getBidIncrement(effectiveCurrentPrice);

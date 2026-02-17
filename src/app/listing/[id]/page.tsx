@@ -323,6 +323,7 @@ export default async function ListingPage({ params }: ListingPageProps) {
                     listingId={listing.id}
                     currentBid={listing.current_bid}
                     startingPrice={listing.starting_price}
+                    isAuthenticated={!!user}
                   />
                 )}
 
