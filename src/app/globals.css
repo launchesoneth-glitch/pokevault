@@ -1,26 +1,260 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-background: #0a0e1a;
+  --color-foreground: #f0f4ff;
+  --color-surface: #111827;
+  --color-surface-hover: #1a2236;
+  --color-border: #1e2a42;
+  --color-border-light: #2a3a5c;
+  --color-muted: #7a8baa;
+  --color-accent: #ffd700;
+  --color-accent-hover: #ffed4a;
+  --color-pokered: #ff3d5a;
+  --color-pokered-hover: #ff1744;
+  --color-success: #00e676;
+  --color-warning: #ffab00;
+  --color-info: #00b0ff;
+  --color-neon-blue: #00d4ff;
+  --color-neon-purple: #bf5af2;
+  --color-neon-pink: #ff2d87;
+  --color-neon-green: #39ff14;
+  --font-sans: "Inter", "system-ui", sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+/* Base */
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--color-neon-blue), var(--color-neon-purple));
+  border-radius: 3px;
+}
+
+/* Selections */
+::selection {
+  background: rgba(255, 215, 0, 0.3);
+  color: #fff;
+}
+
+/* ========== GLOW EFFECTS ========== */
+.glow-accent {
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.15), 0 0 60px rgba(255, 215, 0, 0.05);
+}
+.glow-blue {
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.15), 0 0 60px rgba(0, 212, 255, 0.05);
+}
+.glow-red {
+  box-shadow: 0 0 20px rgba(255, 61, 90, 0.2), 0 0 60px rgba(255, 61, 90, 0.05);
+}
+.glow-purple {
+  box-shadow: 0 0 20px rgba(191, 90, 242, 0.15), 0 0 60px rgba(191, 90, 242, 0.05);
+}
+
+/* ========== GLASS MORPHISM ========== */
+.glass {
+  background: rgba(17, 24, 39, 0.6);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.glass-strong {
+  background: rgba(17, 24, 39, 0.8);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(30px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* ========== GRADIENT BORDERS ========== */
+.border-gradient {
+  position: relative;
+  border: none;
+}
+.border-gradient::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, var(--color-neon-blue), var(--color-neon-purple), var(--color-accent));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ========== HOLOGRAPHIC / SHINY CARD ========== */
+.card-holo {
+  position: relative;
+  overflow: hidden;
+}
+.card-holo::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 20%,
+    rgba(0, 212, 255, 0.03) 30%,
+    rgba(191, 90, 242, 0.05) 40%,
+    rgba(255, 215, 0, 0.05) 50%,
+    rgba(191, 90, 242, 0.03) 60%,
+    transparent 80%
+  );
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  pointer-events: none;
+}
+.card-holo:hover::after {
+  opacity: 1;
+}
+
+/* ========== NEON TEXT ========== */
+.text-neon-gold {
+  color: #ffd700;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.5), 0 0 30px rgba(255, 215, 0, 0.2);
+}
+.text-neon-blue {
+  color: #00d4ff;
+  text-shadow: 0 0 10px rgba(0, 212, 255, 0.5), 0 0 30px rgba(0, 212, 255, 0.2);
+}
+.text-neon-red {
+  color: #ff3d5a;
+  text-shadow: 0 0 10px rgba(255, 61, 90, 0.5), 0 0 30px rgba(255, 61, 90, 0.2);
+}
+
+/* ========== ANIMATED GRADIENT TEXT ========== */
+.text-gradient {
+  background: linear-gradient(135deg, #ffd700, #00d4ff, #bf5af2, #ff2d87);
+  background-size: 300% 300%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: gradient-shift 6s ease infinite;
+}
+
+@keyframes gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ========== SHINE SWEEP ========== */
+.shine-sweep {
+  position: relative;
+  overflow: hidden;
+}
+.shine-sweep::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -100%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+  transform: skewX(-25deg);
+  transition: left 0.7s ease;
+}
+.shine-sweep:hover::before {
+  left: 130%;
+}
+
+/* ========== FLOATING PARTICLES BG ========== */
+.bg-particles {
+  background-image:
+    radial-gradient(1px 1px at 10% 20%, rgba(0, 212, 255, 0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 40%, rgba(255, 215, 0, 0.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 30% 70%, rgba(191, 90, 242, 0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 60% 10%, rgba(255, 45, 135, 0.2) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 80%, rgba(0, 212, 255, 0.2) 0%, transparent 100%);
+}
+
+/* ========== BUTTON STYLES ========== */
+.btn-neon {
+  position: relative;
+  background: linear-gradient(135deg, #ffd700, #ffed4a);
+  color: #0a0e1a;
+  font-weight: 700;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+.btn-neon:hover {
+  box-shadow: 0 0 30px rgba(255, 215, 0, 0.5), 0 0 60px rgba(255, 215, 0, 0.2);
+  transform: translateY(-1px);
+}
+
+.btn-outline-neon {
+  position: relative;
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.4);
+  color: var(--color-neon-blue);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+.btn-outline-neon:hover {
+  border-color: var(--color-neon-blue);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.2);
+  background: rgba(0, 212, 255, 0.05);
+}
+
+/* ========== XP BAR ========== */
+.xp-bar-fill {
+  background: linear-gradient(90deg, #ffd700, #00d4ff, #bf5af2);
+  background-size: 200% 100%;
+  animation: xp-shimmer 3s ease infinite;
+}
+
+@keyframes xp-shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+/* ========== ANIMATIONS ========== */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-red {
+  animation: pulse-red 1s ease-in-out infinite;
+}
+
+@keyframes fill-xp {
+  from { width: 0%; }
+}
+.animate-fill-xp {
+  animation: fill-xp 1s ease-out;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+}
+.animate-float {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px rgba(255, 215, 0, 0.2); }
+  50% { box-shadow: 0 0 30px rgba(255, 215, 0, 0.4), 0 0 60px rgba(255, 215, 0, 0.15); }
+}
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ========== TAG / BADGE STYLES ========== */
+.tag-auction {
+  background: linear-gradient(135deg, rgba(0, 176, 255, 0.2), rgba(0, 212, 255, 0.1));
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  color: #00d4ff;
+}
+.tag-buynow {
+  background: linear-gradient(135deg, rgba(0, 230, 118, 0.2), rgba(57, 255, 20, 0.1));
+  border: 1px solid rgba(0, 230, 118, 0.3);
+  color: #00e676;
 }
