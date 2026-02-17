@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
+import { SortSelect } from "@/components/browse/sort-select";
 import Link from "next/link";
 
 export const metadata: Metadata = {
