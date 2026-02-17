@@ -117,7 +117,7 @@ export default async function GamificationPage() {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/login?redirect=/gamification");
+    redirect("/auth/login?redirect=/gamification");
   }
 
   // Fetch user profile
@@ -173,9 +173,9 @@ export default async function GamificationPage() {
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-10">
-          <h1 className="text-3xl font-bold">Gamification Hub</h1>
+          <h1 className="text-3xl font-bold">Rewards Hub</h1>
           <p className="mt-1 text-[#94A3B8]">
-            Level up, earn badges, and compete with fellow trainers.
+            Level up, earn badges, and compete with fellow collectors.
           </p>
         </div>
 

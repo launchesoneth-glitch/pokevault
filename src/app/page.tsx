@@ -43,7 +43,7 @@ export default async function HomePage() {
         <div className="relative mx-auto max-w-7xl text-center">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent backdrop-blur-sm">
             <Zap className="h-4 w-4" />
-            {"Europe's #1 Pokemon TCG Consignment House"}
+            {"Europe's #1 Collectibles Hub"}
           </div>
 
           <h1 className="mt-8 text-5xl font-extrabold tracking-tight sm:text-7xl">

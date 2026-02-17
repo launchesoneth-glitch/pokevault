@@ -11,7 +11,6 @@ import {
 import { CONDITIONS, GRADING_COMPANIES } from "@/lib/constants";
 
 const CATEGORIES = [
-  { value: "raw_singles", label: "Raw Singles" },
   { value: "graded_cards", label: "Graded Cards" },
   { value: "sealed_product", label: "Sealed Product" },
 ] as const;
@@ -27,6 +26,7 @@ const SORT_OPTIONS = [
   { value: "price_low", label: "Price: Low to High" },
   { value: "price_high", label: "Price: High to Low" },
   { value: "most_bids", label: "Most Bids" },
+  { value: "most_watched", label: "Most Watched" },
 ] as const;
 
 export function BrowseFilters() {

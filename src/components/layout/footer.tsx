@@ -16,11 +16,11 @@ export function Footer() {
                 <Sparkles className="h-3.5 w-3.5 text-background" />
               </div>
               <span className="text-lg font-extrabold tracking-tight">
-                <span className="text-neon-gold">Poké</span><span className="text-foreground">Vault</span>
+                <span className="text-neon-gold">Pok\u00e9</span><span className="text-foreground">Vault</span>
               </span>
             </Link>
             <p className="mt-4 text-sm leading-relaxed text-muted">
-              Europe&apos;s premier Pokemon TCG consignment auction house. Buy, sell, and collect with confidence.
+              Europe&apos;s premier auction house consignment provider.
             </p>
             <div className="mt-4 flex gap-1">
               {["#ffd700", "#00d4ff", "#bf5af2", "#ff2d87", "#39ff14"].map((color) => (
@@ -31,19 +31,6 @@ export function Footer() {
                 />
               ))}
             </div>
-          </div>
-
-          {/* Marketplace */}
-          <div>
-            <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-neon-blue">
-              Marketplace
-            </h3>
-            <ul className="space-y-2.5">
-              <FooterLink href="/browse">Browse All</FooterLink>
-              <FooterLink href="/browse/auctions">Auctions</FooterLink>
-              <FooterLink href="/browse/buy-now">Buy Now</FooterLink>
-              <FooterLink href="/browse/sets">Browse by Set</FooterLink>
-            </ul>
           </div>
 
           {/* Sell */}
@@ -58,15 +45,28 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Community */}
+          {/* About Us */}
           <div>
             <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-accent">
-              Community
+              About Us
             </h3>
             <ul className="space-y-2.5">
+              <FooterLink href="/about">Our Story</FooterLink>
               <FooterLink href="/gamification/leaderboard">Leaderboard</FooterLink>
               <FooterLink href="/gamification/badges">Badges</FooterLink>
               <FooterLink href="/gamification/challenges">Challenges</FooterLink>
+            </ul>
+          </div>
+
+          {/* Contact */}
+          <div>
+            <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-neon-blue">
+              Contact
+            </h3>
+            <ul className="space-y-2.5">
+              <FooterLink href="/contact">Get In Touch</FooterLink>
+              <FooterLink href="/faq">FAQ</FooterLink>
+              <FooterLink href="/support">Support</FooterLink>
             </ul>
           </div>
         </div>

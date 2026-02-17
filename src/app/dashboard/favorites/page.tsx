@@ -9,8 +9,8 @@ import { Metadata } from "next";
 /* -------------------------------------------------------------------------- */
 
 export const metadata: Metadata = {
-  title: "Favorites | PokeVault",
-  description: "Your saved listings on PokeVault.",
+  title: "Watchlist | PokeVault",
+  description: "Your watchlist on PokeVault.",
 };
 
 /* -------------------------------------------------------------------------- */
@@ -69,9 +69,9 @@ export default async function FavoritesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Favorites</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Watchlist</h1>
         <p className="mt-1 text-sm text-muted">
-          Listings you&apos;ve saved for later. {validFavorites.length > 0 && (
+          Listings you\'re watching. {validFavorites.length > 0 && (
             <span className="text-foreground font-medium">
               {validFavorites.length} item{validFavorites.length !== 1 && "s"}
             </span>
@@ -118,7 +118,7 @@ export default async function FavoritesPage() {
             <Heart className="h-8 w-8 text-muted/60" />
           </div>
           <h2 className="text-lg font-semibold text-foreground">
-            No favorites yet
+            No items in your watchlist
           </h2>
           <p className="mt-1 max-w-xs text-center text-sm text-muted">
             Browse the marketplace and tap the heart icon on any listing to save

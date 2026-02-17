@@ -60,7 +60,7 @@ const COMMISSION_RATES = [
     category: "Graded Cards",
     rate: "12%",
     rateValue: 12,
-    description: "PSA, BGS, CGC graded slabs",
+    description: "PSA, CGC, SGC graded slabs",
     icon: "🏆",
   },
   {
@@ -121,10 +121,7 @@ export default function ConsignPage() {
         <div className="absolute inset-0 bg-gradient-to-br from-[#FACC15]/5 via-transparent to-[#EF4444]/5" />
         <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#FACC15]/30 bg-[#FACC15]/10 px-4 py-1.5 text-sm font-medium text-[#FACC15]">
-              <Star className="h-4 w-4" />
-              Trusted by 10,000+ collectors
-            </div>
+            
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl lg:text-6xl">
               Turn Your Collection Into{" "}
               <span className="bg-gradient-to-r from-[#FACC15] to-[#F59E0B] bg-clip-text text-transparent">

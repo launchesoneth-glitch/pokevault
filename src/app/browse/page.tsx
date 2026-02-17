@@ -8,7 +8,7 @@ import Link from "next/link";
 export const metadata: Metadata = {
   title: "Browse Listings",
   description:
-    "Browse all Pokemon TCG listings. Find raw singles, graded cards, and sealed products at auction or buy now prices.",
+    "Browse all listings. Find graded cards and sealed products at auction or buy now prices.",
 };
 
 const ITEMS_PER_PAGE = 24;
@@ -61,7 +61,6 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
   if (params.category) {
     const categories = params.category.split(",");
     const categoryNameMap: Record<string, string> = {
-      raw_singles: "raw_singles",
       graded_cards: "graded_cards",
       sealed_product: "sealed_product",
     };
@@ -141,6 +140,9 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
     case "most_bids":
       query = query.order("bid_count", { ascending: false });
       break;
+    case "most_watched":
+      query = query.order("favorite_count", { ascending: false });
+      break;
     default:
       query = query.order("created_at", { ascending: false });
       break;
@@ -175,7 +177,7 @@ export default async function BrowsePage({ searchParams }: BrowsePageProps) {
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-foreground">Browse Listings</h1>
         <p className="mt-2 text-muted">
-          Discover Pokemon TCG cards and sealed products from trusted consigners.
+          Discover products from our wide variety of consigners.
         </p>
       </div>
 

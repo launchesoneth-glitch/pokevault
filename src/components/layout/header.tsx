@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { UserNav } from "./user-nav";
-import { Search, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { SearchButton } from "./search-button";
 
 export async function Header() {
   const supabase = await createClient();
@@ -36,7 +37,6 @@ export async function Header() {
         <nav className="hidden items-center gap-1 md:flex">
           {[
             { href: "/browse", label: "Browse" },
-            { href: "/browse/auctions", label: "Auctions" },
             { href: "/consign", label: "Consign" },
             { href: "/gamification", label: "Rewards" },
           ].map((link) => (
@@ -52,12 +52,7 @@ export async function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-3">
-          <Link
-            href="/browse"
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-all hover:bg-white/5 hover:text-neon-blue"
-          >
-            <Search className="h-4 w-4" />
-          </Link>
+          <SearchButton />
 
           {authUser && profile ? (
             <UserNav user={profile} />

@@ -56,6 +56,9 @@ export default async function BuyNowPage({ searchParams }: BuyNowPageProps) {
     case "price_high":
       query = query.order("buy_now_price", { ascending: false });
       break;
+    case "most_watched":
+      query = query.order("favorite_count", { ascending: false });
+      break;
     case "newly_listed":
     default:
       query = query.order("created_at", { ascending: false });

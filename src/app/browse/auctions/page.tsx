@@ -65,6 +65,9 @@ export default async function AuctionsPage({
     case "most_bids":
       query = query.order("bid_count", { ascending: false });
       break;
+    case "most_watched":
+      query = query.order("favorite_count", { ascending: false });
+      break;
     case "ending_soon":
     default:
       query = query.order("auction_end", { ascending: true });
@@ -124,6 +127,7 @@ export default async function AuctionsPage({
               { value: "price_low", label: "Price: Low to High" },
               { value: "price_high", label: "Price: High to Low" },
               { value: "most_bids", label: "Most Bids" },
+              { value: "most_watched", label: "Most Watched" },
             ]}
           />
       </div>

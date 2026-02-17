@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import {
   User,
   LayoutDashboard,
-  Heart,
+  Eye,
   Bell,
   Settings,
   LogOut,
@@ -90,8 +90,8 @@ export function UserNav({ user }: UserNavProps) {
             />
             <NavItem
               href="/dashboard/favorites"
-              icon={Heart}
-              label="Favorites"
+              icon={Eye}
+              label="Watchlist"
               onClick={() => setOpen(false)}
             />
             <NavItem

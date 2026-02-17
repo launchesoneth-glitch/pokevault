@@ -16,11 +16,11 @@ export function XpBar({ xp, tier, compact = false, className }: XpBarProps) {
   const nextTier = TIERS[currentTierIdx + 1];
 
   const tierLabels: Record<string, string> = {
-    trainer: "Trainer",
-    gym_leader: "Gym Leader",
-    elite_four: "Elite Four",
-    champion: "Champion",
-    professor: "Professor",
+    bronze: "Bronze",
+    silver: "Silver",
+    gold: "Gold",
+    platinum: "Platinum",
+    diamond: "Diamond",
   };
 
   if (!nextTier) {

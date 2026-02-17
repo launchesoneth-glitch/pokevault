@@ -34,47 +34,47 @@ export const XP_AWARDS = {
 
 // Tier thresholds
 export const TIERS = [
-  { name: "trainer", xpRequired: 0, volumeRequired: 0, commissionDiscount: 0, min_xp: 0, color: "#94A3B8" },
+  { name: "bronze", xpRequired: 0, volumeRequired: 0, commissionDiscount: 0, min_xp: 0, color: "#CD7F32" },
   {
-    name: "gym_leader",
+    name: "silver",
     xpRequired: 1000,
     volumeRequired: 500,
     commissionDiscount: 1,
     min_xp: 1000,
-    color: "#3B82F6",
+    color: "#94A3B8",
   },
   {
-    name: "elite_four",
+    name: "gold",
     xpRequired: 5000,
     volumeRequired: 2500,
     commissionDiscount: 2,
     min_xp: 5000,
-    color: "#8B5CF6",
+    color: "#FACC15",
   },
   {
-    name: "champion",
+    name: "platinum",
     xpRequired: 20000,
     volumeRequired: 10000,
     commissionDiscount: 3,
     min_xp: 20000,
-    color: "#F59E0B",
+    color: "#06B6D4",
   },
   {
-    name: "professor",
+    name: "diamond",
     xpRequired: 50000,
     volumeRequired: Infinity,
     commissionDiscount: 4,
     min_xp: 50000,
-    color: "#EF4444",
+    color: "#A855F7",
   },
 ] as const;
 
 export type TierName =
-  | "trainer"
-  | "gym_leader"
-  | "elite_four"
-  | "champion"
-  | "professor";
+  | "bronze"
+  | "silver"
+  | "gold"
+  | "platinum"
+  | "diamond";
 
 // Wheel spin prizes with weights
 export const WHEEL_PRIZES = [
@@ -118,8 +118,11 @@ export const CONDITIONS = [
 // Grading companies
 export const GRADING_COMPANIES = [
   { value: "psa", label: "PSA" },
-  { value: "beckett", label: "Beckett (BGS)" },
+  { value: "beckett", label: "Beckett" },
   { value: "cgc", label: "CGC" },
+  { value: "sgc", label: "SGC" },
+  { value: "tag", label: "TAG" },
+  { value: "other", label: "Others" },
 ] as const;
 
 // Card languages
