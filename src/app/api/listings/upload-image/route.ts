@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
 const BUCKET = "listing-images";
+const MODERATION_THRESHOLD = 0.4; // reject if any NSFW score is above this
 
 function getServiceClient() {
   return createServiceClient(
@@ -50,14 +51,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "File must be under 10 MB" }, { status: 400 });
     }
 
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    // Moderate image with SightEngine before storing
+    const moderationResult = await moderateImage(buffer, file.type);
+    if (!moderationResult.safe) {
+      return NextResponse.json(
+        { error: moderationResult.reason || "Image rejected: inappropriate content detected." },
+        { status: 422 }
+      );
+    }
+
     const serviceClient = getServiceClient();
     await ensureBucket(serviceClient);
 
     const ext = file.name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
-
-    const buffer = Buffer.from(await file.arrayBuffer());
 
     const { error: uploadError } = await serviceClient.storage
       .from(BUCKET)
@@ -79,5 +89,79 @@ export async function POST(request: NextRequest) {
   } catch (err) {
     console.error("POST /api/listings/upload-image error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+async function moderateImage(
+  buffer: Buffer,
+  mimeType: string
+): Promise<{ safe: boolean; reason?: string }> {
+  const apiUser = process.env.SIGHTENGINE_API_USER;
+  const apiSecret = process.env.SIGHTENGINE_API_SECRET;
+
+  // If SightEngine is not configured, allow the upload but log a warning
+  if (!apiUser || !apiSecret) {
+    console.warn("SightEngine not configured — skipping image moderation");
+    return { safe: true };
+  }
+
+  try {
+    const formData = new FormData();
+    const uint8 = new Uint8Array(buffer);
+    formData.append("media", new Blob([uint8], { type: mimeType }), "image.jpg");
+    formData.append("models", "nudity-2.1,offensive,gore2");
+    formData.append("api_user", apiUser);
+    formData.append("api_secret", apiSecret);
+
+    const res = await fetch("https://api.sightengine.com/1.0/check.json", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      console.error("SightEngine API error:", res.status);
+      // Fail open — don't block uploads if moderation service is down
+      return { safe: true };
+    }
+
+    const data = await res.json();
+
+    if (data.status !== "success") {
+      console.error("SightEngine response error:", data);
+      return { safe: true };
+    }
+
+    // Check nudity scores
+    const nudity = data.nudity || {};
+    if (
+      nudity.sexual_activity > MODERATION_THRESHOLD ||
+      nudity.sexual_display > MODERATION_THRESHOLD ||
+      nudity.erotica > MODERATION_THRESHOLD
+    ) {
+      return { safe: false, reason: "Image rejected: nudity or sexual content detected." };
+    }
+
+    // Check for minor-related content
+    if (nudity.none_minors !== undefined && nudity.none_minors < 0.5) {
+      return { safe: false, reason: "Image rejected: content policy violation." };
+    }
+
+    // Check offensive content
+    const offensive = data.offensive || {};
+    if (offensive.prob > MODERATION_THRESHOLD) {
+      return { safe: false, reason: "Image rejected: offensive content detected." };
+    }
+
+    // Check gore
+    const gore = data.gore || {};
+    if (gore.prob > MODERATION_THRESHOLD) {
+      return { safe: false, reason: "Image rejected: violent or graphic content detected." };
+    }
+
+    return { safe: true };
+  } catch (err) {
+    console.error("Image moderation error:", err);
+    // Fail open on network errors
+    return { safe: true };
   }
 }
