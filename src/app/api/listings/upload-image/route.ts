@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
 const BUCKET = "listing-images";
-const MODERATION_THRESHOLD = 0.4; // reject if any NSFW score is above this
+const MODERATION_THRESHOLD = 0.25; // reject if any NSFW score is above this
 
 function getServiceClient() {
   return createServiceClient(
@@ -99,17 +99,17 @@ async function moderateImage(
   const apiUser = process.env.SIGHTENGINE_API_USER;
   const apiSecret = process.env.SIGHTENGINE_API_SECRET;
 
-  // If SightEngine is not configured, allow the upload but log a warning
+  // If SightEngine is not configured, reject uploads — moderation is required
   if (!apiUser || !apiSecret) {
-    console.warn("SightEngine not configured — skipping image moderation");
-    return { safe: true };
+    console.error("SightEngine not configured — blocking upload");
+    return { safe: false, reason: "Image moderation is not available. Please try again later." };
   }
 
   try {
     const formData = new FormData();
     const uint8 = new Uint8Array(buffer);
     formData.append("media", new Blob([uint8], { type: mimeType }), "image.jpg");
-    formData.append("models", "nudity-2.1,offensive,gore2");
+    formData.append("models", "nudity-2.1,offensive,gore2,scam,weapon");
     formData.append("api_user", apiUser);
     formData.append("api_secret", apiSecret);
 
@@ -120,15 +120,14 @@ async function moderateImage(
 
     if (!res.ok) {
       console.error("SightEngine API error:", res.status);
-      // Fail open — don't block uploads if moderation service is down
-      return { safe: true };
+      return { safe: false, reason: "Image moderation service unavailable. Please try again later." };
     }
 
     const data = await res.json();
 
     if (data.status !== "success") {
       console.error("SightEngine response error:", data);
-      return { safe: true };
+      return { safe: false, reason: "Image moderation failed. Please try again later." };
     }
 
     // Check nudity scores
@@ -158,10 +157,21 @@ async function moderateImage(
       return { safe: false, reason: "Image rejected: violent or graphic content detected." };
     }
 
+    // Check weapons
+    const weapon = data.weapon || {};
+    if (weapon.prob !== undefined && weapon.prob > MODERATION_THRESHOLD) {
+      return { safe: false, reason: "Image rejected: weapon detected." };
+    }
+
+    // Check scam
+    const scam = data.scam || {};
+    if (scam.prob !== undefined && scam.prob > MODERATION_THRESHOLD) {
+      return { safe: false, reason: "Image rejected: potential scam content detected." };
+    }
+
     return { safe: true };
   } catch (err) {
     console.error("Image moderation error:", err);
-    // Fail open on network errors
-    return { safe: true };
+    return { safe: false, reason: "Image moderation service unavailable. Please try again later." };
   }
 }

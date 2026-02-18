@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { moderateListingText } from "@/lib/moderation";
 
 const PAGE_SIZE = 24;
 
@@ -204,6 +205,12 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
+    }
+
+    // Moderate text content (title + description)
+    const textCheck = moderateListingText(title, description);
+    if (!textCheck.allowed) {
+      return NextResponse.json({ error: textCheck.reason }, { status: 422 });
     }
 
     // Create the listing
