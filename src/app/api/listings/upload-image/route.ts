@@ -53,15 +53,6 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // Moderate image with SightEngine before storing
-    const moderationResult = await moderateImage(buffer, file.type);
-    if (!moderationResult.safe) {
-      return NextResponse.json(
-        { error: moderationResult.reason || "Image rejected: inappropriate content detected." },
-        { status: 422 }
-      );
-    }
-
     const serviceClient = getServiceClient();
     await ensureBucket(serviceClient);
 
@@ -69,6 +60,7 @@ export async function POST(request: NextRequest) {
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
+    // Upload to Supabase first so we have a public URL for moderation
     const { error: uploadError } = await serviceClient.storage
       .from(BUCKET)
       .upload(filePath, buffer, {
@@ -85,6 +77,16 @@ export async function POST(request: NextRequest) {
       .from(BUCKET)
       .getPublicUrl(filePath);
 
+    // Moderate image via URL — if rejected, delete the uploaded file
+    const moderationResult = await moderateImage(publicUrl);
+    if (!moderationResult.safe) {
+      await serviceClient.storage.from(BUCKET).remove([filePath]);
+      return NextResponse.json(
+        { error: moderationResult.reason || "Image rejected: inappropriate content detected." },
+        { status: 422 }
+      );
+    }
+
     return NextResponse.json({ url: publicUrl });
   } catch (err) {
     console.error("POST /api/listings/upload-image error:", err);
@@ -93,33 +95,31 @@ export async function POST(request: NextRequest) {
 }
 
 async function moderateImage(
-  buffer: Buffer,
-  mimeType: string
+  imageUrl: string
 ): Promise<{ safe: boolean; reason?: string }> {
   const apiUser = process.env.SIGHTENGINE_API_USER;
   const apiSecret = process.env.SIGHTENGINE_API_SECRET;
 
-  // If SightEngine is not configured, reject uploads — moderation is required
   if (!apiUser || !apiSecret) {
     console.error("SightEngine not configured — blocking upload");
     return { safe: false, reason: "Image moderation is not available. Please try again later." };
   }
 
   try {
-    const formData = new FormData();
-    const uint8 = new Uint8Array(buffer);
-    formData.append("media", new Blob([uint8], { type: mimeType }), "image.jpg");
-    formData.append("models", "nudity-2.1,offensive,gore");
-    formData.append("api_user", apiUser);
-    formData.append("api_secret", apiSecret);
-
-    const res = await fetch("https://api.sightengine.com/1.0/check.json", {
-      method: "POST",
-      body: formData,
+    const params = new URLSearchParams({
+      url: imageUrl,
+      models: "nudity-2.1,offensive,gore",
+      api_user: apiUser,
+      api_secret: apiSecret,
     });
 
+    const res = await fetch(
+      `https://api.sightengine.com/1.0/check.json?${params.toString()}`,
+      { method: "GET" }
+    );
+
     if (!res.ok) {
-      console.error("SightEngine API error:", res.status);
+      console.error("SightEngine API error:", res.status, await res.text());
       return { safe: false, reason: "Image moderation service unavailable. Please try again later." };
     }
 
