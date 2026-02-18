@@ -109,7 +109,7 @@ async function moderateImage(
     const formData = new FormData();
     const uint8 = new Uint8Array(buffer);
     formData.append("media", new Blob([uint8], { type: mimeType }), "image.jpg");
-    formData.append("models", "nudity-2.1,offensive,gore2,scam,weapon");
+    formData.append("models", "nudity-2.1,offensive,gore");
     formData.append("api_user", apiUser);
     formData.append("api_secret", apiSecret);
 
@@ -155,18 +155,6 @@ async function moderateImage(
     const gore = data.gore || {};
     if (gore.prob > MODERATION_THRESHOLD) {
       return { safe: false, reason: "Image rejected: violent or graphic content detected." };
-    }
-
-    // Check weapons
-    const weapon = data.weapon || {};
-    if (weapon.prob !== undefined && weapon.prob > MODERATION_THRESHOLD) {
-      return { safe: false, reason: "Image rejected: weapon detected." };
-    }
-
-    // Check scam
-    const scam = data.scam || {};
-    if (scam.prob !== undefined && scam.prob > MODERATION_THRESHOLD) {
-      return { safe: false, reason: "Image rejected: potential scam content detected." };
     }
 
     return { safe: true };
