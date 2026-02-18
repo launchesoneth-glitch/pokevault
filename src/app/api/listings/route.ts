@@ -213,6 +213,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: textCheck.reason }, { status: 422 });
     }
 
+    // Validate pokemon_card_id if provided
+    if (pokemon_card_id) {
+      const { data: cardExists } = await supabase
+        .from("pokemon_cards")
+        .select("id")
+        .eq("id", pokemon_card_id)
+        .single();
+
+      if (!cardExists) {
+        return NextResponse.json(
+          { error: "Selected Pokemon card not found. Please re-select." },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create the listing
     const { data: listing, error: listingError } = await supabase
       .from("listings")

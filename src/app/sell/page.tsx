@@ -14,6 +14,7 @@ import {
   Info,
   CheckCircle,
   AlertCircle,
+  Search,
 } from "lucide-react";
 
 const MAX_IMAGES = 8;
@@ -22,6 +23,29 @@ const MIN_IMAGES = 1;
 interface ImagePreview {
   file: File;
   url: string;
+}
+
+interface CardSearchResult {
+  external_id: string;
+  name: string;
+  number: string | null;
+  rarity: string | null;
+  supertype: string | null;
+  subtypes: string[] | null;
+  hp: string | null;
+  types: string[] | null;
+  artist: string | null;
+  image_small: string | null;
+  image_large: string | null;
+  set: {
+    external_id: string | null;
+    name: string | null;
+    series: string | null;
+    release_date: string | null;
+    total_cards: number | null;
+    logo_url: string | null;
+    symbol_url: string | null;
+  };
 }
 
 export default function SellPage() {
@@ -56,6 +80,14 @@ export default function SellPage() {
 
   // Images
   const [images, setImages] = useState<ImagePreview[]>([]);
+
+  // Pokemon card search
+  const [cardSearch, setCardSearch] = useState("");
+  const [cardResults, setCardResults] = useState<CardSearchResult[]>([]);
+  const [selectedCard, setSelectedCard] = useState<CardSearchResult | null>(null);
+  const [pokemonCardId, setPokemonCardId] = useState<string | null>(null);
+  const [cardSearchLoading, setCardSearchLoading] = useState(false);
+  const [showCardDropdown, setShowCardDropdown] = useState(false);
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
@@ -97,6 +129,68 @@ export default function SellPage() {
 
     fetchCategories();
   }, [supabase]);
+
+  // Pokemon card search with debounce
+  useEffect(() => {
+    if (cardSearch.length < 2) {
+      setCardResults([]);
+      setShowCardDropdown(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setCardSearchLoading(true);
+      try {
+        const res = await fetch(
+          `/api/pokemon/search?q=${encodeURIComponent(cardSearch)}`
+        );
+        const json = await res.json();
+        setCardResults(json.cards ?? []);
+        setShowCardDropdown(true);
+      } catch {
+        setCardResults([]);
+      }
+      setCardSearchLoading(false);
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [cardSearch]);
+
+  const handleCardSelect = useCallback(
+    async (card: CardSearchResult) => {
+      setSelectedCard(card);
+      setShowCardDropdown(false);
+      setCardSearch("");
+
+      // Auto-fill title if empty
+      if (!title) {
+        const setName = card.set?.name ?? "";
+        setTitle(`${card.name} - ${setName} #${card.number}`);
+      }
+
+      // Upsert card to get local pokemon_card_id
+      try {
+        const res = await fetch("/api/pokemon/upsert-card", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ card }),
+        });
+        const json = await res.json();
+        if (json.pokemon_card_id) {
+          setPokemonCardId(json.pokemon_card_id);
+        }
+      } catch {
+        console.error("Failed to upsert pokemon card");
+      }
+    },
+    [title]
+  );
+
+  const handleCardClear = useCallback(() => {
+    setSelectedCard(null);
+    setPokemonCardId(null);
+    setCardSearch("");
+  }, []);
 
   // Image handling
   const handleImageSelect = useCallback(
@@ -239,6 +333,7 @@ export default function SellPage() {
       const payload = {
         seller_id: user.id,
         category_id: categoryId,
+        pokemon_card_id: pokemonCardId || null,
         title: title.trim(),
         description: description.trim() || null,
         condition: isGraded ? null : condition || null,
@@ -378,6 +473,104 @@ export default function SellPage() {
             {fieldErrors.images && (
               <p className="mt-2 text-sm text-red-400">{fieldErrors.images}</p>
             )}
+          </section>
+
+          {/* ── Pokemon Card Search (optional) ── */}
+          <section className="rounded-xl border border-[#334155] bg-[#1E293B] p-6">
+            <h2 className="flex items-center gap-2 text-lg font-semibold text-[#E2E8F0]">
+              <Search className="h-5 w-5 text-[#FACC15]" />
+              Link Pokemon Card
+            </h2>
+            <p className="mt-1 text-sm text-[#94A3B8]">
+              Optionally link a specific Pokemon card to auto-fill details. Not
+              needed for sealed products or accessories.
+            </p>
+
+            <div className="mt-4">
+              {selectedCard ? (
+                <div className="flex items-center gap-4 rounded-lg border border-[#FACC15]/30 bg-[#FACC15]/5 p-3">
+                  {selectedCard.image_small && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={selectedCard.image_small}
+                      alt={selectedCard.name}
+                      className="h-20 w-14 rounded object-cover"
+                    />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-[#E2E8F0]">
+                      {selectedCard.name}
+                    </p>
+                    <p className="text-xs text-[#94A3B8]">
+                      {selectedCard.set?.name} &middot; #{selectedCard.number}
+                    </p>
+                    {selectedCard.rarity && (
+                      <p className="text-xs text-[#94A3B8]">
+                        {selectedCard.rarity}
+                      </p>
+                    )}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleCardClear}
+                    className="shrink-0 rounded-full p-1.5 text-[#94A3B8] transition-colors hover:bg-[#0F172A] hover:text-red-400"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#94A3B8]" />
+                  <input
+                    type="text"
+                    value={cardSearch}
+                    onChange={(e) => setCardSearch(e.target.value)}
+                    onFocus={() =>
+                      cardResults.length > 0 && setShowCardDropdown(true)
+                    }
+                    onBlur={() =>
+                      setTimeout(() => setShowCardDropdown(false), 200)
+                    }
+                    placeholder="Search by card name (e.g. Charizard, Pikachu VMAX)..."
+                    className="w-full rounded-lg border border-[#334155] bg-[#0F172A] py-2.5 pl-10 pr-10 text-sm text-[#E2E8F0] placeholder-[#64748B] outline-none transition-colors focus:border-[#FACC15]/50"
+                  />
+                  {cardSearchLoading && (
+                    <Loader2 className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 animate-spin text-[#94A3B8]" />
+                  )}
+
+                  {showCardDropdown && cardResults.length > 0 && (
+                    <div className="absolute z-20 mt-1 max-h-72 w-full overflow-y-auto rounded-lg border border-[#334155] bg-[#1E293B] shadow-xl">
+                      {cardResults.map((card) => (
+                        <button
+                          key={card.external_id}
+                          type="button"
+                          onMouseDown={(e) => e.preventDefault()}
+                          onClick={() => handleCardSelect(card)}
+                          className="flex w-full items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-[#0F172A]/50"
+                        >
+                          {card.image_small && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={card.image_small}
+                              alt={card.name}
+                              className="h-12 w-9 rounded object-cover"
+                            />
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-[#E2E8F0]">
+                              {card.name}
+                            </p>
+                            <p className="text-xs text-[#94A3B8]">
+                              {card.set?.name} &middot; #{card.number}
+                            </p>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </section>
 
           {/* ── Basic Info ── */}
