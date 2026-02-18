@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
+import https from "https";
 
 const BUCKET = "listing-images";
 const MODERATION_THRESHOLD = 0.25;
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
 
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 1. Moderate image BEFORE storing — send binary directly to SightEngine
+    // 1. Moderate image BEFORE storing
     const moderationResult = await moderateImage(buffer, file.type);
     if (!moderationResult.safe) {
       return NextResponse.json(
@@ -93,6 +94,35 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/**
+ * Send image to SightEngine using raw Node.js https module.
+ * This avoids all issues with fetch/FormData/Blob on Vercel serverless.
+ */
+function sightEngineRequest(body: Buffer, boundary: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const options = {
+      hostname: "api.sightengine.com",
+      port: 443,
+      path: "/1.0/check.json",
+      method: "POST",
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": body.length,
+      },
+    };
+
+    const req = https.request(options, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk) => chunks.push(chunk));
+      res.on("end", () => resolve(Buffer.concat(chunks).toString("utf-8")));
+    });
+
+    req.on("error", reject);
+    req.write(body);
+    req.end();
+  });
+}
+
 async function moderateImage(
   buffer: Buffer,
   mimeType: string
@@ -106,11 +136,9 @@ async function moderateImage(
   }
 
   try {
-    // Build multipart body manually — FormData/Blob is unreliable on Vercel serverless
     const boundary = `----SightEngine${Date.now()}`;
     const parts: Buffer[] = [];
 
-    // Add text fields
     const fields: Record<string, string> = {
       models: "nudity-2.1,offensive,gore",
       api_user: apiUser,
@@ -123,7 +151,6 @@ async function moderateImage(
       ));
     }
 
-    // Add file field
     parts.push(Buffer.from(
       `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="image.jpg"\r\nContent-Type: ${mimeType}\r\n\r\n`
     ));
@@ -132,33 +159,24 @@ async function moderateImage(
 
     const body = Buffer.concat(parts);
 
-    const res = await fetch("https://api.sightengine.com/1.0/check.json", {
-      method: "POST",
-      headers: {
-        "Content-Type": `multipart/form-data; boundary=${boundary}`,
-        "Content-Length": body.length.toString(),
-      },
-      body: body,
-    });
+    const raw = await sightEngineRequest(body, boundary);
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("SightEngine API error:", res.status, errText);
-      return { safe: false, reason: "Image moderation service unavailable. Please try again later." };
+    let data: any;
+    try {
+      data = JSON.parse(raw);
+    } catch {
+      console.error("SightEngine invalid JSON response:", raw.slice(0, 500));
+      return { safe: false, reason: "Image moderation service error. Please try again." };
     }
-
-    const data = await res.json();
 
     if (data.status !== "success") {
       console.error("SightEngine response error:", JSON.stringify(data));
-      // If image is too small for moderation, allow it (not a content issue)
       if (data.error?.code === 16) {
         return { safe: true };
       }
       return { safe: false, reason: "Image moderation failed. Please try again later." };
     }
 
-    // Check nudity scores
     const nudity = data.nudity || {};
     if (
       nudity.sexual_activity > MODERATION_THRESHOLD ||
@@ -168,18 +186,15 @@ async function moderateImage(
       return { safe: false, reason: "Image rejected: nudity or sexual content detected." };
     }
 
-    // Check for minor-related content
     if (nudity.none_minors !== undefined && nudity.none_minors < 0.5) {
       return { safe: false, reason: "Image rejected: content policy violation." };
     }
 
-    // Check offensive content
     const offensive = data.offensive || {};
     if (offensive.prob > MODERATION_THRESHOLD) {
       return { safe: false, reason: "Image rejected: offensive content detected." };
     }
 
-    // Check gore
     const gore = data.gore || {};
     if (gore.prob > MODERATION_THRESHOLD) {
       return { safe: false, reason: "Image rejected: violent or graphic content detected." };
@@ -188,6 +203,6 @@ async function moderateImage(
     return { safe: true };
   } catch (err) {
     console.error("Image moderation error:", err);
-    return { safe: false, reason: "Image moderation service unavailable. Please try again later." };
+    return { safe: false, reason: `Image moderation error: ${err instanceof Error ? err.message : String(err)}` };
   }
 }
