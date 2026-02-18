@@ -106,16 +106,39 @@ async function moderateImage(
   }
 
   try {
-    const formData = new FormData();
-    const uint8 = new Uint8Array(buffer);
-    formData.append("media", new Blob([uint8], { type: mimeType }), "image.jpg");
-    formData.append("models", "nudity-2.1,offensive,gore");
-    formData.append("api_user", apiUser);
-    formData.append("api_secret", apiSecret);
+    // Build multipart body manually — FormData/Blob is unreliable on Vercel serverless
+    const boundary = `----SightEngine${Date.now()}`;
+    const parts: Buffer[] = [];
+
+    // Add text fields
+    const fields: Record<string, string> = {
+      models: "nudity-2.1,offensive,gore",
+      api_user: apiUser,
+      api_secret: apiSecret,
+    };
+
+    for (const [key, value] of Object.entries(fields)) {
+      parts.push(Buffer.from(
+        `--${boundary}\r\nContent-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`
+      ));
+    }
+
+    // Add file field
+    parts.push(Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="media"; filename="image.jpg"\r\nContent-Type: ${mimeType}\r\n\r\n`
+    ));
+    parts.push(buffer);
+    parts.push(Buffer.from(`\r\n--${boundary}--\r\n`));
+
+    const body = Buffer.concat(parts);
 
     const res = await fetch("https://api.sightengine.com/1.0/check.json", {
       method: "POST",
-      body: formData,
+      headers: {
+        "Content-Type": `multipart/form-data; boundary=${boundary}`,
+        "Content-Length": body.length.toString(),
+      },
+      body: body,
     });
 
     if (!res.ok) {
