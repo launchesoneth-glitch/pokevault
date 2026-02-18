@@ -174,7 +174,7 @@ async function moderateImage(
       if (data.error?.code === 16) {
         return { safe: true };
       }
-      return { safe: false, reason: "Image moderation failed. Please try again later." };
+      return { safe: false, reason: `Image moderation failed: ${data.error?.message || JSON.stringify(data)}` };
     }
 
     const nudity = data.nudity || {};
