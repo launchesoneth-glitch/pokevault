@@ -3,8 +3,6 @@ ALTER TABLE listings ALTER COLUMN consignment_id DROP NOT NULL;
 
 -- Add marketplace columns
 ALTER TABLE listings ADD COLUMN IF NOT EXISTS listing_source TEXT NOT NULL DEFAULT 'consignment';
-ALTER TABLE listings ADD COLUMN IF NOT EXISTS contact_method TEXT;
-ALTER TABLE listings ADD COLUMN IF NOT EXISTS contact_info TEXT;
 
 -- Update existing grading_company CHECK to allow new values (sgc, tag, other)
 -- Drop old constraint if it exists, add flexible one

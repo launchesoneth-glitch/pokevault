@@ -10,20 +10,11 @@ import {
   Loader2,
   ImagePlus,
   DollarSign,
-  MessageSquare,
   Package,
   Info,
   CheckCircle,
   AlertCircle,
 } from "lucide-react";
-
-const CONTACT_METHODS = [
-  { value: "discord", label: "Discord" },
-  { value: "email", label: "Email" },
-  { value: "instagram", label: "Instagram" },
-  { value: "whatsapp", label: "WhatsApp" },
-  { value: "other", label: "Other" },
-] as const;
 
 const MAX_IMAGES = 8;
 const MIN_IMAGES = 1;
@@ -62,10 +53,6 @@ export default function SellPage() {
 
   // Form fields - Pricing
   const [price, setPrice] = useState("");
-
-  // Form fields - Contact
-  const [contactMethod, setContactMethod] = useState("");
-  const [contactDetails, setContactDetails] = useState("");
 
   // Images
   const [images, setImages] = useState<ImagePreview[]>([]);
@@ -196,10 +183,6 @@ export default function SellPage() {
       }
     }
 
-    if (!contactMethod) errors.contactMethod = "Select a contact method.";
-    if (!contactDetails.trim())
-      errors.contactDetails = "Enter your contact details.";
-
     if (images.length < MIN_IMAGES)
       errors.images = "At least " + MIN_IMAGES + " image is required.";
     if (images.length > MAX_IMAGES)
@@ -274,8 +257,6 @@ export default function SellPage() {
         offers_enabled: false,
         auto_extend: false,
         auto_extend_minutes: 0,
-        contact_method: contactMethod,
-        contact_details: contactDetails.trim(),
         images: imagePayloads,
       };
 
@@ -634,75 +615,6 @@ export default function SellPage() {
                 <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                 This will be the buy-now price for your listing.
               </p>
-            </div>
-          </section>
-
-          {/* ── Contact ── */}
-          <section className="rounded-xl border border-[#334155] bg-[#1E293B] p-6">
-            <h2 className="flex items-center gap-2 text-lg font-semibold text-[#E2E8F0]">
-              <MessageSquare className="h-5 w-5 text-[#FACC15]" />
-              Contact Information
-            </h2>
-            <p className="mt-1 text-sm text-[#94A3B8]">
-              How should buyers reach you?
-            </p>
-
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-[#E2E8F0]">
-                  Preferred Contact Method{" "}
-                  <span className="text-red-400">*</span>
-                </label>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {CONTACT_METHODS.map((cm) => (
-                    <button
-                      key={cm.value}
-                      type="button"
-                      onClick={() => setContactMethod(cm.value)}
-                      className={`rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
-                        contactMethod === cm.value
-                          ? "border-[#FACC15] bg-[#FACC15]/10 text-[#FACC15]"
-                          : "border-[#334155] bg-[#0F172A] text-[#94A3B8] hover:border-[#FACC15]/30"
-                      }`}
-                    >
-                      {cm.label}
-                    </button>
-                  ))}
-                </div>
-                {fieldErrors.contactMethod && (
-                  <p className="mt-1 text-sm text-red-400">
-                    {fieldErrors.contactMethod}
-                  </p>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-[#E2E8F0]">
-                  Contact Details <span className="text-red-400">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={contactDetails}
-                  onChange={(e) => setContactDetails(e.target.value)}
-                  placeholder={
-                    contactMethod === "discord"
-                      ? "Your Discord username"
-                      : contactMethod === "email"
-                        ? "your@email.com"
-                        : contactMethod === "instagram"
-                          ? "@yourusername"
-                          : contactMethod === "whatsapp"
-                            ? "+1 234 567 8900"
-                            : "How to reach you"
-                  }
-                  className="mt-1 w-full rounded-lg border border-[#334155] bg-[#0F172A] px-4 py-2.5 text-sm text-[#E2E8F0] placeholder-[#64748B] outline-none transition-colors focus:border-[#FACC15]/50"
-                />
-                {fieldErrors.contactDetails && (
-                  <p className="mt-1 text-sm text-red-400">
-                    {fieldErrors.contactDetails}
-                  </p>
-                )}
-              </div>
             </div>
           </section>
 

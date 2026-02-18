@@ -166,8 +166,6 @@ export async function POST(request: NextRequest) {
       minimum_offer,
       featured,
       images,
-      contact_method,
-      contact_details,
     } = body;
 
     // Determine if this is a marketplace listing (user) or consignment listing (admin)
@@ -238,8 +236,6 @@ export async function POST(request: NextRequest) {
         minimum_offer: minimum_offer != null ? minimum_offer : null,
         featured: featured ?? false,
         listing_source: isMarketplaceListing ? "marketplace" : "consignment",
-        contact_method: contact_method || null,
-        contact_info: contact_details || null,
       })
       .select()
       .single();

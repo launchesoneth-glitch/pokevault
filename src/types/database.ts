@@ -315,8 +315,6 @@ export interface Database {
           favorite_count: number;
           featured: boolean;
           listing_source: string;
-          contact_method: string | null;
-          contact_info: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -354,8 +352,6 @@ export interface Database {
           favorite_count?: number;
           featured?: boolean;
           listing_source?: string;
-          contact_method?: string | null;
-          contact_info?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -393,8 +389,6 @@ export interface Database {
           favorite_count?: number;
           featured?: boolean;
           listing_source?: string;
-          contact_method?: string | null;
-          contact_info?: string | null;
           created_at?: string;
           updated_at?: string;
         };
