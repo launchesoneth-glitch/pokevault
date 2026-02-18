@@ -291,7 +291,7 @@ export interface Database {
           description: string | null;
           condition: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language: string;
-          grading_company: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
+          grading_company: "psa" | "beckett" | "cgc" | "sgc" | "tag" | null;
           grade: number | null;
           cert_number: string | null;
           listing_type: "auction" | "buy_now" | "auction_with_buy_now";
@@ -328,7 +328,7 @@ export interface Database {
           description?: string | null;
           condition?: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language?: string;
-          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
+          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | null;
           grade?: number | null;
           cert_number?: string | null;
           listing_type: "auction" | "buy_now" | "auction_with_buy_now";
@@ -365,7 +365,7 @@ export interface Database {
           description?: string | null;
           condition?: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language?: string;
-          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
+          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | null;
           grade?: number | null;
           cert_number?: string | null;
           listing_type?: "auction" | "buy_now" | "auction_with_buy_now";

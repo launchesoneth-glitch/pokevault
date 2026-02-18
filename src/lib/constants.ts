@@ -122,7 +122,6 @@ export const GRADING_COMPANIES = [
   { value: "cgc", label: "CGC" },
   { value: "sgc", label: "SGC" },
   { value: "tag", label: "TAG" },
-  { value: "other", label: "Others" },
 ] as const;
 
 // Card languages
