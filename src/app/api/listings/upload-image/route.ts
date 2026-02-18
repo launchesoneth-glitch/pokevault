@@ -4,7 +4,10 @@ import { createClient as createServiceClient } from "@supabase/supabase-js";
 import https from "https";
 
 const BUCKET = "listing-images";
-const MODERATION_THRESHOLD = 0.25;
+// Very strict — this is a Pokemon card marketplace, no reason for any nudity/gore
+const NUDITY_THRESHOLD = 0.10;
+const GORE_THRESHOLD = 0.10;
+const OFFENSIVE_THRESHOLD = 0.15;
 
 function getServiceClient() {
   return createServiceClient(
@@ -174,29 +177,51 @@ async function moderateImage(
       if (data.error?.code === 16) {
         return { safe: true };
       }
-      return { safe: false, reason: `Image moderation failed: ${data.error?.message || JSON.stringify(data)}` };
+      return { safe: false, reason: "Image moderation failed. Please try again later." };
     }
 
     const nudity = data.nudity || {};
+
+    // If "none" score is below 0.75, the image likely contains nudity
+    if (nudity.none !== undefined && nudity.none < 0.75) {
+      return { safe: false, reason: "Image rejected: inappropriate content detected." };
+    }
+
+    // Check specific nudity categories
     if (
-      nudity.sexual_activity > MODERATION_THRESHOLD ||
-      nudity.sexual_display > MODERATION_THRESHOLD ||
-      nudity.erotica > MODERATION_THRESHOLD
+      nudity.sexual_activity > NUDITY_THRESHOLD ||
+      nudity.sexual_display > NUDITY_THRESHOLD ||
+      nudity.erotica > NUDITY_THRESHOLD ||
+      nudity.very_suggestive > 0.20 ||
+      nudity.visibly_undressed > 0.20
     ) {
       return { safe: false, reason: "Image rejected: nudity or sexual content detected." };
     }
 
-    if (nudity.none_minors !== undefined && nudity.none_minors < 0.5) {
+    // Check suggestive sub-classes
+    const suggestive = nudity.suggestive_classes || {};
+    if (
+      suggestive.visibly_undressed > 0.20 ||
+      suggestive.sextoy > NUDITY_THRESHOLD ||
+      suggestive.lingerie > 0.30
+    ) {
+      return { safe: false, reason: "Image rejected: inappropriate content detected." };
+    }
+
+    // Check for minor-related content — zero tolerance
+    if (nudity.none_minors !== undefined && nudity.none_minors < 0.8) {
       return { safe: false, reason: "Image rejected: content policy violation." };
     }
 
+    // Check offensive content (nazi, confederate, supremacist, middle finger, etc.)
     const offensive = data.offensive || {};
-    if (offensive.prob > MODERATION_THRESHOLD) {
+    if (offensive.prob > OFFENSIVE_THRESHOLD) {
       return { safe: false, reason: "Image rejected: offensive content detected." };
     }
 
+    // Check gore — very strict
     const gore = data.gore || {};
-    if (gore.prob > MODERATION_THRESHOLD) {
+    if (gore.prob > GORE_THRESHOLD) {
       return { safe: false, reason: "Image rejected: violent or graphic content detected." };
     }
 
