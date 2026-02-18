@@ -159,7 +159,7 @@ export default function SellPage() {
 
     if (!title.trim()) errors.title = "Title is required.";
     if (!categoryId) errors.categoryId = "Please select a category.";
-    if (!condition) errors.condition = "Please select a condition.";
+    if (!isGraded && !condition) errors.condition = "Please select a condition.";
     if (!language) errors.language = "Please select a language.";
 
     if (isGraded) {
@@ -203,33 +203,30 @@ export default function SellPage() {
     setSubmitting(true);
 
     try {
-      // 1. Upload images to Supabase Storage
+      // 1. Upload images via server API
       const uploadedUrls: string[] = [];
 
       for (let i = 0; i < images.length; i++) {
-        const file = images[i].file;
-        const ext = file.name.split(".").pop() || "jpg";
-        const timestamp = Date.now();
-        const filePath = user.id + "/" + timestamp + "-" + i + "." + ext;
+        const formData = new FormData();
+        formData.append("file", images[i].file);
 
-        const { error: uploadError } = await supabase.storage
-          .from("listing-images")
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
+        const uploadRes = await fetch("/api/listings/upload-image", {
+          method: "POST",
+          body: formData,
+        });
 
-        if (uploadError) {
+        if (!uploadRes.ok) {
+          const uploadBody = await uploadRes.json().catch(() => ({}));
           throw new Error(
-            "Failed to upload image " + (i + 1) + ": " + uploadError.message
+            "Failed to upload image " +
+              (i + 1) +
+              ": " +
+              (uploadBody.error || "Upload failed")
           );
         }
 
-        const {
-          data: { publicUrl },
-        } = supabase.storage.from("listing-images").getPublicUrl(filePath);
-
-        uploadedUrls.push(publicUrl);
+        const { url } = await uploadRes.json();
+        uploadedUrls.push(url);
       }
 
       // 2. Build the listing payload
@@ -244,7 +241,7 @@ export default function SellPage() {
         category_id: categoryId,
         title: title.trim(),
         description: description.trim() || null,
-        condition: condition || null,
+        condition: isGraded ? null : condition || null,
         language,
         grading_company: isGraded ? gradingCompany : null,
         grade: isGraded && grade ? parseFloat(grade) : null,
@@ -448,8 +445,55 @@ export default function SellPage() {
                 )}
               </div>
 
-              {/* Condition & Language */}
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Language */}
+              <div>
+                <label className="block text-sm font-medium text-[#E2E8F0]">
+                  Language <span className="text-red-400">*</span>
+                </label>
+                <select
+                  value={language}
+                  onChange={(e) => setLanguage(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-[#334155] bg-[#0F172A] px-4 py-2.5 text-sm text-[#E2E8F0] outline-none transition-colors focus:border-[#FACC15]/50"
+                >
+                  {CARD_LANGUAGES.map((lang) => (
+                    <option key={lang.value} value={lang.value}>
+                      {lang.label}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.language && (
+                  <p className="mt-1 text-sm text-red-400">
+                    {fieldErrors.language}
+                  </p>
+                )}
+              </div>
+
+              {/* Grading toggle */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsGraded(!isGraded)}
+                  className="flex items-center gap-3 cursor-pointer"
+                >
+                  <div
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${
+                      isGraded ? "bg-[#FACC15]" : "bg-[#334155]"
+                    }`}
+                  >
+                    <div
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                        isGraded ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </div>
+                  <span className="text-sm font-medium text-[#E2E8F0]">
+                    Professionally graded
+                  </span>
+                </button>
+              </div>
+
+              {/* Condition (shown when NOT graded) */}
+              {!isGraded && (
                 <div>
                   <label className="block text-sm font-medium text-[#E2E8F0]">
                     Condition <span className="text-red-400">*</span>
@@ -472,52 +516,9 @@ export default function SellPage() {
                     </p>
                   )}
                 </div>
+              )}
 
-                <div>
-                  <label className="block text-sm font-medium text-[#E2E8F0]">
-                    Language <span className="text-red-400">*</span>
-                  </label>
-                  <select
-                    value={language}
-                    onChange={(e) => setLanguage(e.target.value)}
-                    className="mt-1 w-full rounded-lg border border-[#334155] bg-[#0F172A] px-4 py-2.5 text-sm text-[#E2E8F0] outline-none transition-colors focus:border-[#FACC15]/50"
-                  >
-                    {CARD_LANGUAGES.map((lang) => (
-                      <option key={lang.value} value={lang.value}>
-                        {lang.label}
-                      </option>
-                    ))}
-                  </select>
-                  {fieldErrors.language && (
-                    <p className="mt-1 text-sm text-red-400">
-                      {fieldErrors.language}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Grading toggle */}
-              <div>
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div
-                    className={`relative h-6 w-11 rounded-full transition-colors ${
-                      isGraded ? "bg-[#FACC15]" : "bg-[#334155]"
-                    }`}
-                    onClick={() => setIsGraded(!isGraded)}
-                  >
-                    <div
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                        isGraded ? "translate-x-5" : "translate-x-0.5"
-                      }`}
-                    />
-                  </div>
-                  <span className="text-sm font-medium text-[#E2E8F0]">
-                    Professionally graded
-                  </span>
-                </label>
-              </div>
-
-              {/* Grading details */}
+              {/* Grading details (shown when graded) */}
               {isGraded && (
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                   <div>
