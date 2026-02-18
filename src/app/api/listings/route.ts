@@ -138,17 +138,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Verify admin role
-    const { data: profile, error: profileError } = await supabase
-      .from("users")
-      .select("is_admin")
-      .eq("id", user.id)
-      .single();
-
-    if (profileError || !profile?.is_admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const body = await request.json();
 
     const {
@@ -177,22 +166,54 @@ export async function POST(request: NextRequest) {
       minimum_offer,
       featured,
       images,
+      contact_method,
+      contact_details,
     } = body;
 
-    // Validate required fields
-    if (!consignment_id || !seller_id || !category_id || !title || !listing_type) {
-      return NextResponse.json(
-        { error: "Missing required fields: consignment_id, seller_id, category_id, title, listing_type" },
-        { status: 400 }
-      );
+    // Determine if this is a marketplace listing (user) or consignment listing (admin)
+    const isMarketplaceListing = !consignment_id;
+
+    if (isMarketplaceListing) {
+      // Marketplace listing: any authenticated user can create for themselves
+      if (seller_id !== user.id) {
+        return NextResponse.json(
+          { error: "You can only create listings for yourself" },
+          { status: 403 }
+        );
+      }
+
+      if (!category_id || !title || !listing_type) {
+        return NextResponse.json(
+          { error: "Missing required fields: category_id, title, listing_type" },
+          { status: 400 }
+        );
+      }
+    } else {
+      // Consignment listing: admin only
+      const { data: profile, error: profileError } = await supabase
+        .from("users")
+        .select("is_admin")
+        .eq("id", user.id)
+        .single();
+
+      if (profileError || !profile?.is_admin) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      if (!seller_id || !category_id || !title || !listing_type) {
+        return NextResponse.json(
+          { error: "Missing required fields: consignment_id, seller_id, category_id, title, listing_type" },
+          { status: 400 }
+        );
+      }
     }
 
     // Create the listing
     const { data: listing, error: listingError } = await supabase
       .from("listings")
       .insert({
-        consignment_id,
-        seller_id,
+        consignment_id: consignment_id || null,
+        seller_id: seller_id || user.id,
         category_id,
         pokemon_card_id: pokemon_card_id || null,
         title,
@@ -206,16 +227,19 @@ export async function POST(request: NextRequest) {
         starting_price: starting_price != null ? starting_price : null,
         reserve_price: reserve_price != null ? reserve_price : null,
         buy_now_price: buy_now_price != null ? buy_now_price : null,
-        current_bid: starting_price || 0,
+        current_bid: starting_price || buy_now_price || 0,
         auction_start: auction_start || null,
         auction_end: auction_end || null,
         auto_extend: auto_extend ?? true,
         auto_extend_minutes: auto_extend_minutes ?? 2,
-        status: listingStatus || "draft",
+        status: listingStatus || "active",
         commission_rate: commission_rate != null ? commission_rate : null,
         offers_enabled: offers_enabled ?? false,
         minimum_offer: minimum_offer != null ? minimum_offer : null,
         featured: featured ?? false,
+        listing_source: isMarketplaceListing ? "marketplace" : "consignment",
+        contact_method: contact_method || null,
+        contact_info: contact_details || null,
       })
       .select()
       .single();

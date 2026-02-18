@@ -13,6 +13,7 @@ import {
   LogOut,
   Trophy,
   BookOpen,
+  Tag,
   ChevronDown,
 } from "lucide-react";
 import { XpBar } from "@/components/ui/xp-bar";
@@ -110,6 +111,12 @@ export function UserNav({ user }: UserNavProps) {
               href="/collection"
               icon={BookOpen}
               label="Collection"
+              onClick={() => setOpen(false)}
+            />
+            <NavItem
+              href="/sell/my-listings"
+              icon={Tag}
+              label="My Listings"
               onClick={() => setOpen(false)}
             />
             <NavItem

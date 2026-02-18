@@ -37,6 +37,7 @@ export async function Header() {
         <nav className="hidden items-center gap-1 md:flex">
           {[
             { href: "/browse", label: "Browse" },
+            { href: "/sell", label: "Sell" },
             { href: "/consign", label: "Consign" },
             { href: "/gamification", label: "Rewards" },
           ].map((link) => (

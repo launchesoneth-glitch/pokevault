@@ -22,7 +22,7 @@ export interface Database {
           stripe_customer_id: string | null;
           stripe_connect_account_id: string | null;
           xp: number;
-          tier: "trainer" | "gym_leader" | "elite_four" | "champion" | "professor";
+          tier: "bronze" | "silver" | "gold" | "platinum" | "diamond";
           total_sales_volume: number;
           total_purchases_volume: number;
           total_transactions: number;
@@ -49,7 +49,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           stripe_connect_account_id?: string | null;
           xp?: number;
-          tier?: "trainer" | "gym_leader" | "elite_four" | "champion" | "professor";
+          tier?: "bronze" | "silver" | "gold" | "platinum" | "diamond";
           total_sales_volume?: number;
           total_purchases_volume?: number;
           total_transactions?: number;
@@ -76,7 +76,7 @@ export interface Database {
           stripe_customer_id?: string | null;
           stripe_connect_account_id?: string | null;
           xp?: number;
-          tier?: "trainer" | "gym_leader" | "elite_four" | "champion" | "professor";
+          tier?: "bronze" | "silver" | "gold" | "platinum" | "diamond";
           total_sales_volume?: number;
           total_purchases_volume?: number;
           total_transactions?: number;
@@ -283,7 +283,7 @@ export interface Database {
       listings: {
         Row: {
           id: string;
-          consignment_id: string;
+          consignment_id: string | null;
           seller_id: string;
           category_id: string;
           pokemon_card_id: string | null;
@@ -291,7 +291,7 @@ export interface Database {
           description: string | null;
           condition: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language: string;
-          grading_company: "psa" | "beckett" | "cgc" | null;
+          grading_company: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
           grade: number | null;
           cert_number: string | null;
           listing_type: "auction" | "buy_now" | "auction_with_buy_now";
@@ -314,12 +314,15 @@ export interface Database {
           view_count: number;
           favorite_count: number;
           featured: boolean;
+          listing_source: string;
+          contact_method: string | null;
+          contact_info: string | null;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
-          consignment_id: string;
+          consignment_id?: string | null;
           seller_id: string;
           category_id: string;
           pokemon_card_id?: string | null;
@@ -327,7 +330,7 @@ export interface Database {
           description?: string | null;
           condition?: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language?: string;
-          grading_company?: "psa" | "beckett" | "cgc" | null;
+          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
           grade?: number | null;
           cert_number?: string | null;
           listing_type: "auction" | "buy_now" | "auction_with_buy_now";
@@ -350,6 +353,9 @@ export interface Database {
           view_count?: number;
           favorite_count?: number;
           featured?: boolean;
+          listing_source?: string;
+          contact_method?: string | null;
+          contact_info?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -363,7 +369,7 @@ export interface Database {
           description?: string | null;
           condition?: "mint" | "near_mint" | "lightly_played" | "moderately_played" | "heavily_played" | "damaged" | null;
           language?: string;
-          grading_company?: "psa" | "beckett" | "cgc" | null;
+          grading_company?: "psa" | "beckett" | "cgc" | "sgc" | "tag" | "other" | null;
           grade?: number | null;
           cert_number?: string | null;
           listing_type?: "auction" | "buy_now" | "auction_with_buy_now";
@@ -386,6 +392,9 @@ export interface Database {
           view_count?: number;
           favorite_count?: number;
           featured?: boolean;
+          listing_source?: string;
+          contact_method?: string | null;
+          contact_info?: string | null;
           created_at?: string;
           updated_at?: string;
         };
