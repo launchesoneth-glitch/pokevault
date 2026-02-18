@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createClient as createServiceClient } from "@supabase/supabase-js";
 
-const BUCKET = "listing-images";
-const MODERATION_THRESHOLD = 0.25; // reject if any NSFW score is above this
+const PUBLIC_BUCKET = "listing-images";
+const STAGING_BUCKET = "listing-images-staging";
+const MODERATION_THRESHOLD = 0.25;
 
 function getServiceClient() {
   return createServiceClient(
@@ -12,13 +13,22 @@ function getServiceClient() {
   );
 }
 
-async function ensureBucket(serviceClient: ReturnType<typeof getServiceClient>) {
+async function ensureBuckets(serviceClient: ReturnType<typeof getServiceClient>) {
   const { data: buckets } = await serviceClient.storage.listBuckets();
-  const exists = buckets?.some((b) => b.name === BUCKET);
-  if (!exists) {
-    await serviceClient.storage.createBucket(BUCKET, {
+  const names = buckets?.map((b) => b.name) || [];
+
+  if (!names.includes(PUBLIC_BUCKET)) {
+    await serviceClient.storage.createBucket(PUBLIC_BUCKET, {
       public: true,
-      fileSizeLimit: 10 * 1024 * 1024, // 10 MB
+      fileSizeLimit: 10 * 1024 * 1024,
+      allowedMimeTypes: ["image/*"],
+    });
+  }
+
+  if (!names.includes(STAGING_BUCKET)) {
+    await serviceClient.storage.createBucket(STAGING_BUCKET, {
+      public: false,
+      fileSizeLimit: 10 * 1024 * 1024,
       allowedMimeTypes: ["image/*"],
     });
   }
@@ -54,38 +64,65 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     const serviceClient = getServiceClient();
-    await ensureBucket(serviceClient);
+    await ensureBuckets(serviceClient);
 
     const ext = file.name.split(".").pop() || "jpg";
     const timestamp = Date.now();
     const filePath = `${user.id}/${timestamp}-${Math.random().toString(36).slice(2, 7)}.${ext}`;
 
-    // Upload to Supabase first so we have a public URL for moderation
-    const { error: uploadError } = await serviceClient.storage
-      .from(BUCKET)
+    // 1. Upload to PRIVATE staging bucket (not publicly accessible)
+    const { error: stagingError } = await serviceClient.storage
+      .from(STAGING_BUCKET)
       .upload(filePath, buffer, {
         contentType: file.type,
         cacheControl: "3600",
         upsert: false,
       });
 
-    if (uploadError) {
-      return NextResponse.json({ error: uploadError.message }, { status: 500 });
+    if (stagingError) {
+      return NextResponse.json({ error: stagingError.message }, { status: 500 });
     }
 
-    const { data: { publicUrl } } = serviceClient.storage
-      .from(BUCKET)
-      .getPublicUrl(filePath);
+    // 2. Generate a short-lived signed URL for SightEngine to access
+    const { data: signedUrlData, error: signedUrlError } = await serviceClient.storage
+      .from(STAGING_BUCKET)
+      .createSignedUrl(filePath, 120); // 2 min expiry
 
-    // Moderate image via URL — if rejected, delete the uploaded file
-    const moderationResult = await moderateImage(publicUrl);
+    if (signedUrlError || !signedUrlData?.signedUrl) {
+      await serviceClient.storage.from(STAGING_BUCKET).remove([filePath]);
+      return NextResponse.json({ error: "Failed to process image" }, { status: 500 });
+    }
+
+    // 3. Moderate the image via the signed URL — image is NOT public yet
+    const moderationResult = await moderateImage(signedUrlData.signedUrl);
     if (!moderationResult.safe) {
-      await serviceClient.storage.from(BUCKET).remove([filePath]);
+      // Delete from staging — never reaches public bucket
+      await serviceClient.storage.from(STAGING_BUCKET).remove([filePath]);
       return NextResponse.json(
         { error: moderationResult.reason || "Image rejected: inappropriate content detected." },
         { status: 422 }
       );
     }
+
+    // 4. Image passed — upload to the PUBLIC bucket
+    const { error: publicError } = await serviceClient.storage
+      .from(PUBLIC_BUCKET)
+      .upload(filePath, buffer, {
+        contentType: file.type,
+        cacheControl: "3600",
+        upsert: false,
+      });
+
+    // Clean up staging regardless
+    await serviceClient.storage.from(STAGING_BUCKET).remove([filePath]);
+
+    if (publicError) {
+      return NextResponse.json({ error: publicError.message }, { status: 500 });
+    }
+
+    const { data: { publicUrl } } = serviceClient.storage
+      .from(PUBLIC_BUCKET)
+      .getPublicUrl(filePath);
 
     return NextResponse.json({ url: publicUrl });
   } catch (err) {
